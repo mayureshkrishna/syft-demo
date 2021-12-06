@@ -1,6 +1,6 @@
 # Demo: CICD Integrations with Syft
 
-This is a very rough set of demos for integrating Syft with varios CICD tools.  If you don't know what Syft is, read up here: https://github.com/anchore/syft
+This is a very rough set of demos for integrating Syft with various CICD tools.  If you don't know what Syft is, read up here: https://github.com/anchore/syft
 
 ## Scenario 1: GitHub Workflow
 
