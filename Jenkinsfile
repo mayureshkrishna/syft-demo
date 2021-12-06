@@ -104,7 +104,7 @@ pipeline {
       // archive the sbom
       archiveArtifacts artifacts: '*.spdx.json'
       // delete the images locally
-      sh 'docker rmi ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod'
+      sh 'docker image rm ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod || failure=1'
     } // end always
   } //end post
       
