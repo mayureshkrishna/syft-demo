@@ -61,7 +61,7 @@ If you are implementing the package blocking and would like to see a successful 
 ### Part 3: Check for CVEs with Grype (optional)
 There is a companion repo and demo for Anchore Grype here: https://github.com/pvnovarese/jenkins-grype-demo
 
-### Part 5: Cleanup
+### Part 4: Cleanup
 - Kill the jenkins container (it will automatically be removed since we specified --rm when we created it):
 	`pvn@gyarados /home/pvn> docker kill jenkins`
 - Remove the jenkins-data directory from /tmp
