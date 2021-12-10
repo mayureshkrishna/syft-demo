@@ -1,5 +1,7 @@
 # Demo: CICD Integrations with Syft
 
+[![Syft Demo](https://github.com/pvnovarese/syft-demo/actions/workflows/syft-demo.yaml/badge.svg)](https://github.com/pvnovarese/syft-demo/actions/workflows/syft-demo.yaml)
+
 This is a very rough set of demos for integrating Syft with various CICD tools.  If you don't know what Syft is, read up here: https://github.com/anchore/syft
 
 ## Scenario 1: GitHub Workflow
