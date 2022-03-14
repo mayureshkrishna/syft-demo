@@ -55,6 +55,7 @@ spec:
    
     stage('Verify Tools') {
       steps {
+        container('docker') {
         // check for docker and curl,
         // install/update syft, /var/jenkins_home should be writable 
         // also if you've set up jenkins in a docker container, this dir should be a persistent volume
@@ -62,15 +63,18 @@ spec:
           which curl
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /home/jenkins/agent/
           """
+      }
       } // end steps
     } // end stage "Verify Tools"
     
     stage('Build Image') {
       steps {
+        container('docker') {
         sh """
           docker login -u ${DOCKER_HUB_USR} -p ${DOCKER_HUB_PSW}
           docker build -t ${REPOSITORY}:${BUILD_NUMBER} --pull -f ./Dockerfile .
         """
+        }
       } // end steps
     } // end stage "build and push"
     
@@ -85,6 +89,7 @@ spec:
     
     stage('Analyze with syft') {
       steps {
+        container('docker') {
         // run syft and output to file, we'll archive that at the end
         sh '/home/jenkins/agent/syft -o cyclonedx-json ${REPOSITORY}:${BUILD_NUMBER} > ${JOB_BASE_NAME}.cyclonedx.json'
         //
@@ -104,11 +109,13 @@ spec:
         // this method uses native syft sbom instead of spdx:
         // sh '/var/jenkins_home/bin/syft -o json ${REPOSITORY}:${BUILD_NUMBER} | jq .artifacts[].name | tr "\n" " " | grep -qv curl'
         //
+        }
       } // end steps
     } // end stage "analyze with syft"
     
     stage('Promote and Push Image') {
       steps {
+        container('docker') {
         sh """
           docker tag ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod
           docker push ${REPOSITORY}:prod
@@ -120,6 +127,7 @@ spec:
         //    // dockerImage.push takes the argument as a new tag for the image before pushing
       //    }
       //  } // end script
+        }
       } // end steps
     } // end stage "retag as prod"
     
