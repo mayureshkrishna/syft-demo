@@ -118,8 +118,8 @@ spec:
      //     docker.withRegistry('', HUB_CREDENTIAL) {
      //       dockerImage.push('prod') 
         //    // dockerImage.push takes the argument as a new tag for the image before pushing
-          }
-        } // end script
+      //    }
+      //  } // end script
       } // end steps
     } // end stage "retag as prod"
     
