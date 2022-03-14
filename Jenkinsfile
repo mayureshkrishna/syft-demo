@@ -16,7 +16,35 @@ pipeline {
     // BLOCKED_PACKAGE = "curl"
   } // end environment
   
-  agent any
+    agent {
+    kubernetes {
+      label 'spring-petclinic-demo'
+      defaultContainer 'jnlp'
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+labels:
+  component: ci
+spec:
+  # Use service account that can deploy to all namespaces
+  serviceAccountName: jenkins
+  containers:
+  - name: docker
+    image: docker:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - mountPath: /var/run/docker.sock
+      name: docker-sock
+  volumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
+"""
+}
+   }
   stages {
     
     stage('Checkout SCM') {
@@ -32,29 +60,28 @@ pipeline {
         // also if you've set up jenkins in a docker container, this dir should be a persistent volume
         sh """
           which curl
-          which jq
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /home/jenkins/agent/
           """
       } // end steps
     } // end stage "Verify Tools"
     
-  //  stage('Build Image') {
-    //  steps {
-      //  sh """
-        //  docker login -u ${DOCKER_HUB_USR} -p ${DOCKER_HUB_PSW}
-        //  docker build -t ${REPOSITORY}:${BUILD_NUMBER} --pull -f ./Dockerfile .
-     //   """
-  //    } // end steps
-  //  } // end stage "build and push"
+    stage('Build Image') {
+      steps {
+        sh """
+          docker login -u ${DOCKER_HUB_USR} -p ${DOCKER_HUB_PSW}
+          docker build -t ${REPOSITORY}:${BUILD_NUMBER} --pull -f ./Dockerfile .
+        """
+      } // end steps
+    } // end stage "build and push"
     
     // I don't like using the docker plugin, but if you do:
-     stage('Build image and tag with build number') {
-      steps {
-        script {
-          dockerImage = docker.build REPOSITORY + ":${BUILD_NUMBER}"
-        } // end script
-       } // end steps
-     } // end stage "build image and tag w build number"
+   //  stage('Build image and tag with build number') {
+   //   steps {
+   //     script {
+   //       dockerImage = docker.build REPOSITORY + ":${BUILD_NUMBER}"
+   //     } // end script
+  //     } // end steps
+  //   } // end stage "build image and tag w build number"
     
     stage('Analyze with syft') {
       steps {
@@ -82,14 +109,14 @@ pipeline {
     
     stage('Promote and Push Image') {
       steps {
-       // sh """
-       //   docker tag ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod
-       //   docker push ${REPOSITORY}:prod
-      //  """
+        sh """
+          docker tag ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod
+          docker push ${REPOSITORY}:prod
+        """
         // I don't really like using the docker plug-in, but if you do, something like this:
-        script {
-          docker.withRegistry('', HUB_CREDENTIAL) {
-            dockerImage.push('prod') 
+     //   script {
+     //     docker.withRegistry('', HUB_CREDENTIAL) {
+     //       dockerImage.push('prod') 
         //    // dockerImage.push takes the argument as a new tag for the image before pushing
           }
         } // end script
