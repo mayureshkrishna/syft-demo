@@ -31,10 +31,9 @@ pipeline {
         // install/update syft, /var/jenkins_home should be writable 
         // also if you've set up jenkins in a docker container, this dir should be a persistent volume
         sh """
-          // which docker
           which curl
           which jq
-          // curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /var/jenkins_home/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /home/jenkins/agent/
           """
       } // end steps
     } // end stage "Verify Tools"
@@ -60,7 +59,7 @@ pipeline {
     stage('Analyze with syft') {
       steps {
         // run syft and output to file, we'll archive that at the end
-        sh '/data/jenkins_home/bin/syft -o cyclonedx-json ${REPOSITORY}:${BUILD_NUMBER} > ${JOB_BASE_NAME}.spdx.json'
+        sh '/home/jenkins/agent/syft -o cyclonedx-json ${REPOSITORY}:${BUILD_NUMBER} > ${JOB_BASE_NAME}.cyclonedx.json'
         //
         // you can do some analysis here, for example you can check for
         // forbidden packages and break the pipeline if the image has
