@@ -31,36 +31,36 @@ pipeline {
         // install/update syft, /var/jenkins_home should be writable 
         // also if you've set up jenkins in a docker container, this dir should be a persistent volume
         sh """
-          which docker
+          // which docker
           which curl
           which jq
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /var/jenkins_home/bin
+          // curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /var/jenkins_home/bin
           """
       } // end steps
     } // end stage "Verify Tools"
     
-    stage('Build Image') {
-      steps {
-        sh """
-          docker login -u ${DOCKER_HUB_USR} -p ${DOCKER_HUB_PSW}
-          docker build -t ${REPOSITORY}:${BUILD_NUMBER} --pull -f ./Dockerfile .
-        """
-      } // end steps
-    } // end stage "build and push"
+  //  stage('Build Image') {
+    //  steps {
+      //  sh """
+        //  docker login -u ${DOCKER_HUB_USR} -p ${DOCKER_HUB_PSW}
+        //  docker build -t ${REPOSITORY}:${BUILD_NUMBER} --pull -f ./Dockerfile .
+     //   """
+  //    } // end steps
+  //  } // end stage "build and push"
     
     // I don't like using the docker plugin, but if you do:
-    // stage('Build image and tag with build number') {
-    //  steps {
-    //    script {
-    //      dockerImage = docker.build REPOSITORY + ":${BUILD_NUMBER}"
-    //    } // end script
-    //   } // end steps
-    // } // end stage "build image and tag w build number"
+     stage('Build image and tag with build number') {
+      steps {
+        script {
+          dockerImage = docker.build REPOSITORY + ":${BUILD_NUMBER}"
+        } // end script
+       } // end steps
+     } // end stage "build image and tag w build number"
     
     stage('Analyze with syft') {
       steps {
         // run syft and output to file, we'll archive that at the end
-        sh '/var/jenkins_home/bin/syft -o spdx-json ${REPOSITORY}:${BUILD_NUMBER} > ${JOB_BASE_NAME}.spdx.json'
+        sh '/data/jenkins_home/bin/syft -o cyclonedx-json ${REPOSITORY}:${BUILD_NUMBER} > ${JOB_BASE_NAME}.spdx.json'
         //
         // you can do some analysis here, for example you can check for
         // forbidden packages and break the pipeline if the image has
@@ -83,17 +83,17 @@ pipeline {
     
     stage('Promote and Push Image') {
       steps {
-        sh """
-          docker tag ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod
-          docker push ${REPOSITORY}:prod
-        """
+       // sh """
+       //   docker tag ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod
+       //   docker push ${REPOSITORY}:prod
+      //  """
         // I don't really like using the docker plug-in, but if you do, something like this:
-        //script {
-        //  docker.withRegistry('', HUB_CREDENTIAL) {
-        //    dockerImage.push('prod') 
+        script {
+          docker.withRegistry('', HUB_CREDENTIAL) {
+            dockerImage.push('prod') 
         //    // dockerImage.push takes the argument as a new tag for the image before pushing
-        //  }
-        //} // end script
+          }
+        } // end script
       } // end steps
     } // end stage "retag as prod"
     
@@ -102,9 +102,9 @@ pipeline {
   post {
     always {
       // archive the sbom
-      archiveArtifacts artifacts: '*.spdx.json'
+      archiveArtifacts artifacts: '*.cyclonedx.json'
       // delete the images locally
-      sh 'docker image rm ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod || failure=1'
+     // sh 'docker image rm ${REPOSITORY}:${BUILD_NUMBER} ${REPOSITORY}:prod || failure=1'
     } // end always
   } //end post
       
